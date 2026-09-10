@@ -1,0 +1,22 @@
+# Root
+.env
+.DS_Store
+*.log
+
+# Backend
+backend/target/
+backend/data/
+backend/uploads/
+backend/receipts/
+backend/.idea/
+backend/*.iml
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+oracleJdk-26/
+*.class
+target/
+out/
+.idea/
