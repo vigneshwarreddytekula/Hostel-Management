@@ -27,7 +27,7 @@ server:
 
 app:
   jwt:
-    secret: HostelManagementJwtSecretKeyMustBeLongEnoughForHS256Algorithm2026
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:hostel_db}?allowPublicKeyRetrieval=true&useSSL=false
     expiration-ms: 86400000
   upload-dir: uploads
   receipt-dir: receipts

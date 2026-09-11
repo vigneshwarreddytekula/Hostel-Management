@@ -6,6 +6,7 @@ import com.hostel.management.entity.Booking;
 import com.hostel.management.entity.Room;
 import com.hostel.management.entity.User;
 import com.hostel.management.enums.BookingStatus;
+import com.hostel.management.enums.GenderPreference;
 import com.hostel.management.enums.NotificationType;
 import com.hostel.management.enums.Role;
 import com.hostel.management.exception.ApiException;
