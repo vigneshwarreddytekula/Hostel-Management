@@ -63,14 +63,24 @@ export default function HostelMap({
   selectedCoords,
   myHostelIds = [],
   selectable = true,
+  enablePinningByDefault = false,
   onSelectLocation,
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersGroupRef = useRef(null);
   const activeTileLayerRef = useRef(null);
+  const lastFlyKeyRef = useRef('');
+  
+  const [isPinningMode, setIsPinningMode] = useState(enablePinningByDefault);
+  const isPinningModeRef = useRef(enablePinningByDefault);
+  
   const [mapType, setMapType] = useState('street'); // 'street' (Normal) | 'satellite' (Geographical) | 'topo' (Terrain)
   const [clickedLocationInfo, setClickedLocationInfo] = useState(null);
+
+  useEffect(() => {
+    isPinningModeRef.current = isPinningMode;
+  }, [isPinningMode]);
 
   // Initialize Interactive Leaflet Map with Layer Switcher
   useEffect(() => {
@@ -83,15 +93,15 @@ export default function HostelMap({
     if (focus?.latitude != null && focus?.longitude != null) {
       centerLat = focus.latitude;
       centerLng = focus.longitude;
-      zoom = 14;
+      zoom = 15;
     } else if (selectedCoords?.latitude != null && selectedCoords?.longitude != null) {
       centerLat = selectedCoords.latitude;
       centerLng = selectedCoords.longitude;
-      zoom = 14;
+      zoom = 15;
     } else if (userCoords?.latitude != null && userCoords?.longitude != null) {
       centerLat = userCoords.latitude;
       centerLng = userCoords.longitude;
-      zoom = 13;
+      zoom = 15;
     } else if (hostels[0]?.latitude != null && hostels[0]?.longitude != null) {
       centerLat = hostels[0].latitude;
       centerLng = hostels[0].longitude;
@@ -106,7 +116,7 @@ export default function HostelMap({
       streetLayer.addTo(map);
       activeTileLayerRef.current = streetLayer;
 
-      // Add native Leaflet layer control
+      // Add native Leaflet layer control widget
       const baseMaps = {
         '🗺️ Normal Street': streetLayer,
         '🛰️ Geographical / Satellite': satelliteLayer,
@@ -117,9 +127,9 @@ export default function HostelMap({
       markersGroupRef.current = L.layerGroup().addTo(map);
       mapInstanceRef.current = map;
 
-      // Click to pick location manually on map
+      // Click to pick location manually on map ONLY when pinning mode is active
       map.on('click', async (e) => {
-        if (!selectable) return;
+        if (!selectable || !isPinningModeRef.current) return;
         const { lat, lng } = e.latlng;
         const roundedLat = Math.round(lat * 1000000) / 1000000;
         const roundedLng = Math.round(lng * 1000000) / 1000000;
@@ -138,10 +148,34 @@ export default function HostelMap({
           onSelectLocation(locationData);
         }
       });
-    } else {
-      mapInstanceRef.current.setView([centerLat, centerLng], zoom);
     }
   }, []);
+
+  // Immediate Auto-Zoom & Center Animation whenever user location is detected or selected coordinates change
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (userCoords?.latitude != null && userCoords?.longitude != null) {
+      const key = `user:${userCoords.latitude.toFixed(5)},${userCoords.longitude.toFixed(5)}`;
+      if (lastFlyKeyRef.current !== key) {
+        lastFlyKeyRef.current = key;
+        map.flyTo([userCoords.latitude, userCoords.longitude], 16, { animate: true, duration: 1.2 });
+      }
+    } else if (selectedCoords?.latitude != null && selectedCoords?.longitude != null) {
+      const key = `select:${selectedCoords.latitude.toFixed(5)},${selectedCoords.longitude.toFixed(5)}`;
+      if (lastFlyKeyRef.current !== key) {
+        lastFlyKeyRef.current = key;
+        map.flyTo([selectedCoords.latitude, selectedCoords.longitude], 16, { animate: true, duration: 1.2 });
+      }
+    } else if (focus?.latitude != null && focus?.longitude != null) {
+      const key = `focus:${focus.latitude.toFixed(5)},${focus.longitude.toFixed(5)}`;
+      if (lastFlyKeyRef.current !== key) {
+        lastFlyKeyRef.current = key;
+        map.flyTo([focus.latitude, focus.longitude], 16, { animate: true, duration: 1.2 });
+      }
+    }
+  }, [userCoords, selectedCoords, focus]);
 
   // Switch Tile Layer (Normal Street vs Geographical Satellite vs Terrain Topo)
   const switchMapLayer = (type) => {
@@ -215,7 +249,7 @@ export default function HostelMap({
       bounds.push([activeSelected.latitude, activeSelected.longitude]);
     }
 
-    if (bounds.length > 1 && !focus) {
+    if (bounds.length > 1 && !focus && !userCoords && !selectedCoords) {
       try {
         map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
       } catch (_err) {
@@ -311,26 +345,51 @@ export default function HostelMap({
             bottom: '10px',
             left: '10px',
             right: '10px',
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(6px)',
-            padding: '0.45rem 0.75rem',
-            borderRadius: '10px',
-            boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
-            fontSize: '0.85rem',
+            background: 'rgba(255, 255, 255, 0.96)',
+            backdropFilter: 'blur(8px)',
+            padding: '0.5rem 0.85rem',
+            borderRadius: '12px',
+            boxShadow: '0 4px 18px rgba(0,0,0,0.2)',
+            fontSize: '0.88rem',
             fontWeight: 600,
             color: '#0f3d39',
             zIndex: 1000,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '0.5rem',
+            justify: 'space-between',
+            gap: '0.6rem',
             flexWrap: 'wrap'
           }}
         >
-          <span>👉 <strong>Interactive Map:</strong> Click anywhere to manually pick location coordinates.</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <button
+              type="button"
+              onClick={() => setIsPinningMode(!isPinningMode)}
+              style={{
+                background: isPinningMode ? '#be185d' : '#0f3d39',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.4rem 0.85rem',
+                fontSize: '0.85rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem'
+              }}
+            >
+              {isPinningMode ? '📍 Map Pinning ACTIVE (Click Map to Drop Pin)' : '📌 Enable Select Location on Map'}
+            </button>
+            <span style={{ fontSize: '0.82rem', color: '#475569' }}>
+              {isPinningMode ? 'Click anywhere on map to pin coordinates' : 'Turn ON to pick location by clicking map'}
+            </span>
+          </div>
+
           {clickedLocationInfo && (
-            <span style={{ color: '#be185d', fontWeight: 700 }}>
-              Pinned: {clickedLocationInfo.fullAddr ? clickedLocationInfo.fullAddr.slice(0, 40) + '…' : `${clickedLocationInfo.latitude}, ${clickedLocationInfo.longitude}`}
+            <span style={{ color: '#be185d', fontWeight: 700, fontSize: '0.85rem' }}>
+              Pinned: {clickedLocationInfo.fullAddr ? clickedLocationInfo.fullAddr.slice(0, 38) + '…' : `${clickedLocationInfo.latitude}, ${clickedLocationInfo.longitude}`}
             </span>
           )}
         </div>
