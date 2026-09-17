@@ -146,6 +146,18 @@ export default function OwnerDashboard() {
     reload();
   };
 
+  const deleteHostel = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to permanently delete "${name}" from the webpage?`)) return;
+    setErr(''); setMsg('');
+    try {
+      await api.delete(`/hostels/${id}`);
+      setMsg(`Hostel "${name}" deleted successfully.`);
+      reload();
+    } catch (ex) {
+      setErr(ex.response?.data?.error || 'Could not delete hostel.');
+    }
+  };
+
   const decideBooking = async (id, approve) => {
     await api.post(`/bookings/${id}/${approve ? 'approve' : 'reject'}`);
     reload();
@@ -417,16 +429,25 @@ export default function OwnerDashboard() {
                     {h.verified ? <StatusBadge status="VERIFIED" /> : <StatusBadge status="PENDING" />}
                     <div className="meta">{h.availableBeds} beds open · min ₹{h.minRent ?? '—'}</div>
                   </div>
-                  <label className="btn btn-secondary btn-sm">
-                    Upload images
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      hidden
-                      onChange={(e) => uploadImages(h.id, e.target.files)}
-                    />
-                  </label>
+                  <div className="actions" style={{ alignItems: 'center' }}>
+                    <label className="btn btn-secondary btn-sm">
+                      Upload images
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        hidden
+                        onChange={(e) => uploadImages(h.id, e.target.files)}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-sm"
+                      onClick={() => deleteHostel(h.id, h.name)}
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

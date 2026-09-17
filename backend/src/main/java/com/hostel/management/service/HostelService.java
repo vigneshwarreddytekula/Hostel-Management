@@ -95,6 +95,10 @@ public class HostelService {
     @Transactional
     public void delete(Long id) {
         Hostel hostel = requireOwnedHostel(id);
+        List<Room> rooms = roomRepository.findByHostelId(hostel.getId());
+        if (!rooms.isEmpty()) {
+            roomRepository.deleteAll(rooms);
+        }
         hostelRepository.delete(hostel);
     }
 

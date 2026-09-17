@@ -27,6 +27,16 @@ export default function AdminDashboard() {
     reload();
   };
 
+  const deleteHostel = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to permanently delete "${name}" from the platform?`)) return;
+    try {
+      await api.delete(`/hostels/${id}`);
+      reload();
+    } catch (ex) {
+      alert(ex.response?.data?.error || 'Could not delete hostel.');
+    }
+  };
+
   const setActive = async (id, active) => {
     await api.patch(`/admin/users/${id}/active`, null, { params: { active } });
     reload();
@@ -114,8 +124,9 @@ export default function AdminDashboard() {
                       <button className="btn btn-primary btn-sm" type="button" onClick={() => verify(h.id, true)}>Verify</button>
                     )}
                     {h.verified && (
-                      <button className="btn btn-danger btn-sm" type="button" onClick={() => verify(h.id, false)}>Unverify</button>
+                      <button className="btn btn-secondary btn-sm" type="button" onClick={() => verify(h.id, false)}>Unverify</button>
                     )}
+                    <button className="btn btn-danger btn-sm" type="button" onClick={() => deleteHostel(h.id, h.name)}>🗑️ Delete</button>
                   </td>
                 </tr>
               ))}
