@@ -98,6 +98,13 @@ export default function TenantDashboard() {
     }
   };
 
+  // Handle manual location pick by clicking on the interactive map
+  const handleMapLocationSelect = (locData) => {
+    setErr('');
+    setTenantCoords({ latitude: locData.latitude, longitude: locData.longitude });
+    setMsg(`📍 Search location pinned on map: ${locData.address || `${locData.latitude}, ${locData.longitude}`}`);
+  };
+
   // Process nearby hostels within tenant radius
   const nearbyHostels = allHostels
     .map((h) => {
@@ -330,7 +337,11 @@ export default function TenantDashboard() {
                 <h4 style={{ margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   📍 Interactive Location Map
                 </h4>
-                <HostelMap hostels={nearbyHostels} userCoords={tenantCoords} />
+                <HostelMap
+                  hostels={nearbyHostels}
+                  userCoords={tenantCoords}
+                  onSelectLocation={handleMapLocationSelect}
+                />
               </div>
             </div>
           </div>

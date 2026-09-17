@@ -102,6 +102,19 @@ export default function OwnerDashboard() {
     }
   };
 
+  // Handle manual location selection by clicking on the interactive map
+  const handleMapLocationSelect = (locData) => {
+    setErr('');
+    setHostelForm((f) => ({
+      ...f,
+      latitude: String(locData.latitude),
+      longitude: String(locData.longitude),
+      address: locData.address || f.address,
+      city: locData.city || f.city,
+    }));
+    setMsg(`📍 Location pinned from map: ${locData.address || `${locData.latitude}, ${locData.longitude}`}`);
+  };
+
   const createHostel = async (e) => {
     e.preventDefault();
     setErr(''); setMsg('');
@@ -238,7 +251,12 @@ export default function OwnerDashboard() {
                 Open Full Map View →
               </button>
             </div>
-            <HostelMap hostels={allPlatformHostels} myHostelIds={myHostelIds} />
+            <HostelMap
+              hostels={allPlatformHostels}
+              myHostelIds={myHostelIds}
+              selectedCoords={hostelForm.latitude && hostelForm.longitude ? { latitude: Number(hostelForm.latitude), longitude: Number(hostelForm.longitude) } : null}
+              onSelectLocation={handleMapLocationSelect}
+            />
           </div>
 
           <div className="grid grid-2" style={{ alignItems: 'start' }}>

@@ -59,6 +59,16 @@ export default function Search() {
     }
   };
 
+  // Handle manual location selection by clicking anywhere on the map
+  const handleMapLocationSelect = (locData) => {
+    setLocationError('');
+    setUserCoords({ latitude: locData.latitude, longitude: locData.longitude });
+    setLocationMode('map');
+    if (locData.address) {
+      setCustomLocationText(locData.address);
+    }
+  };
+
   const load = async () => {
     setLoading(true);
     try {
@@ -163,6 +173,24 @@ export default function Search() {
             disabled={locating}
           >
             {locating && locationMode === 'current' ? 'Locating...' : '📍 Use Current Location'}
+          </button>
+
+          <button
+            type="button"
+            className="btn"
+            style={{
+              background: locationMode === 'map' ? '#ffffff' : 'rgba(255,255,255,0.18)',
+              color: locationMode === 'map' ? '#0f3d39' : '#ffffff',
+              fontWeight: 800,
+              border: '1px solid rgba(255,255,255,0.3)',
+              backdropFilter: 'blur(4px)'
+            }}
+            onClick={() => {
+              setLocationMode('map');
+              setLocationError('');
+            }}
+          >
+            🗺️ Click Map to Pick Pin
           </button>
 
           <button
@@ -350,7 +378,11 @@ export default function Search() {
         </div>
         <div>
           <h3>Map View</h3>
-          <HostelMap hostels={processedHostels} userCoords={userCoords} />
+          <HostelMap
+            hostels={processedHostels}
+            userCoords={userCoords}
+            onSelectLocation={handleMapLocationSelect}
+          />
         </div>
       </div>
     </div>
