@@ -192,7 +192,7 @@ h1, h2, h3, .brand-font {
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
 
-.table-wrap { overflow-x: auto; }
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
 th, td { text-align: left; padding: 0.75rem 0.5rem; border-bottom: 1px solid var(--sand-200); vertical-align: top; }
 th { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -226,4 +226,26 @@ th { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-s
 .footer {
   margin-top: 3rem; padding: 2rem 0; border-top: 1px solid var(--sand-200);
   color: var(--muted); font-size: 0.9rem;
+}
+
+/* Mobile Responsiveness & Touch Target Enhancements */
+@media (max-width: 640px) {
+  .container { width: calc(100% - 1.25rem); }
+  .nav { flex-direction: column; align-items: stretch; gap: 0.6rem; padding: 0.6rem 0; }
+  .nav-links { justify-content: space-between; width: 100%; gap: 0.5rem; }
+  .nav-links a, .nav-links button.linkish { min-height: 44px; display: inline-flex; align-items: center; font-size: 0.95rem !important; }
+  
+  .form input, .form select, .form textarea {
+    font-size: 16px !important; /* Prevents iOS Safari automatic zoom on input focus */
+    padding: 0.75rem 0.85rem;
+    min-height: 44px;
+  }
+
+  .btn { min-height: 44px; font-size: 0.95rem; }
+  .btn-sm { min-height: 38px; }
+
+  .panel { padding: 0.9rem 1rem; }
+  .map-frame { height: 260px; }
+  
+  th, td { padding: 0.6rem 0.4rem; font-size: 0.88rem; }
 }

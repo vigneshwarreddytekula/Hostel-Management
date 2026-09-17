@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
+import { mediaUrl } from '../AuthContext';
 import HostelMap from '../components/HostelMap';
 import { calculateDistanceKm, geocodeAddress, getCurrentCoordinates } from '../utils/location';
 
@@ -306,7 +307,7 @@ export default function Search() {
                   className="thumb"
                   style={{
                     backgroundImage: h.imageUrls?.[0]
-                      ? `url(${h.imageUrls[0].startsWith('http') ? h.imageUrls[0] : `http://localhost:8080${h.imageUrls[0]}`})`
+                      ? `url(${mediaUrl(h.imageUrls[0])})`
                       : PLACEHOLDER,
                   }}
                 />

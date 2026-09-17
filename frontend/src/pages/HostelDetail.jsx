@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
-import { useAuth } from '../AuthContext';
+import { mediaUrl, useAuth } from '../AuthContext';
 import HostelMap from '../components/HostelMap';
 import { calculateDistanceKm, getCurrentCoordinates } from '../utils/location';
 
@@ -101,9 +101,7 @@ export default function HostelDetail() {
   if (!hostel) return <div className="container section">Loading…</div>;
 
   const img = hostel.imageUrls?.[0];
-  const imgUrl = img
-    ? (img.startsWith('http') ? img : `http://localhost:8080${img}`)
-    : null;
+  const imgUrl = img ? mediaUrl(img) : null;
 
   const isAadhaarComplete = !!(user?.aadhaarNumber && user?.aadhaarUploaded);
 

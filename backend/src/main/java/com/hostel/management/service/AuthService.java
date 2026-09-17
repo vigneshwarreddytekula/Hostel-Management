@@ -32,14 +32,15 @@ public class AuthService {
         if (req.getRole() == Role.ADMIN) {
             throw ApiException.forbidden("Cannot self-register as admin");
         }
-        if (userRepository.existsByEmail(req.getEmail().toLowerCase())) {
+        String email = req.getEmail().toLowerCase().trim();
+        if (userRepository.existsByEmail(email)) {
             throw ApiException.conflict("Email already registered");
         }
         User user = User.builder()
-                .email(req.getEmail().toLowerCase())
+                .email(email)
                 .passwordHash(passwordEncoder.encode(req.getPassword()))
-                .name(req.getName())
-                .phone(req.getPhone())
+                .name(req.getName().trim())
+                .phone(req.getPhone() != null ? req.getPhone().trim() : null)
                 .gender(req.getGender())
                 .role(req.getRole())
                 .active(true)
@@ -49,12 +50,14 @@ public class AuthService {
     }
 
     public AuthDtos.AuthResponse login(AuthDtos.LoginRequest req) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.getEmail().toLowerCase(), req.getPassword()));
-        User user = userRepository.findByEmail(req.getEmail().toLowerCase())
-                .orElseThrow(() -> ApiException.notFound("User not found"));
+        String email = req.getEmail().toLowerCase().trim();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> ApiException.badRequest("Invalid email or password"));
         if (!user.isActive()) {
             throw ApiException.forbidden("Account is disabled");
+        }
+        if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
+            throw ApiException.badRequest("Invalid email or password");
         }
         return buildAuth(user);
     }

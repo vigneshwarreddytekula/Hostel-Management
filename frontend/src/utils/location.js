@@ -1,5 +1,5 @@
 /**
- * Get current browser geolocation coordinates (latitude, longitude)
+ * Get current browser geolocation coordinates (latitude, longitude) with high GPS accuracy
  */
 export function getCurrentCoordinates() {
   return new Promise((resolve, reject) => {
@@ -7,25 +7,43 @@ export function getCurrentCoordinates() {
       reject(new Error('Geolocation is not supported by your browser.'));
       return;
     }
+
+    // Attempt high accuracy GPS position first with zero cache (maximumAge: 0)
     navigator.geolocation.getCurrentPosition(
       (position) => {
         resolve({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
         });
       },
       (error) => {
-        let msg = 'Unable to retrieve your location.';
-        if (error.code === error.PERMISSION_DENIED) {
-          msg = 'Location permission was denied. Please allow location access in your browser.';
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          msg = 'Location information is unavailable.';
-        } else if (error.code === error.TIMEOUT) {
-          msg = 'Location request timed out.';
+        // Fallback to standard accuracy if high accuracy times out (useful for laptops/desktops without dedicated GPS)
+        if (error.code === error.TIMEOUT) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              resolve({
+                latitude: pos.coords.latitude,
+                longitude: pos.coords.longitude,
+                accuracy: pos.coords.accuracy,
+              });
+            },
+            () => {
+              reject(new Error('Location request timed out. Please check location permissions.'));
+            },
+            { enableHighAccuracy: false, timeout: 8000, maximumAge: 0 }
+          );
+        } else {
+          let msg = 'Unable to retrieve your location.';
+          if (error.code === error.PERMISSION_DENIED) {
+            msg = 'Location permission was denied. Please allow location access in your browser settings.';
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            msg = 'Location information is unavailable on your device.';
+          }
+          reject(new Error(msg));
         }
-        reject(new Error(msg));
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
   });
 }
@@ -56,7 +74,7 @@ export async function geocodeAddress(query) {
   if (!query || !query.trim()) return null;
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query.trim())}&limit=1`,
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query.trim())}&limit=1&addressdetails=1`,
       { headers: { 'User-Agent': 'NestoraHostelsApp/1.0' } }
     );
     const data = await res.json();
@@ -75,16 +93,22 @@ export async function geocodeAddress(query) {
 }
 
 /**
- * Reverse geocode latitude and longitude into an address string using OpenStreetMap Nominatim
+ * Reverse geocode latitude and longitude into a precise address string using OpenStreetMap Nominatim
  */
 export async function reverseGeocode(lat, lng) {
   if (lat == null || lng == null) return null;
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
       { headers: { 'User-Agent': 'NestoraHostelsApp/1.0' } }
     );
     const data = await res.json();
+    if (data && data.address) {
+      const a = data.address;
+      const buildingOrRoad = a.building || a.road || a.pedestrian || a.suburb || a.neighbourhood || '';
+      const cityOrArea = a.city || a.town || a.village || a.county || '';
+      if (buildingOrRoad && cityOrArea) return `${buildingOrRoad}, ${cityOrArea}`;
+    }
     if (data && data.display_name) {
       return data.display_name;
     }
